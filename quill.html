@@ -21,7 +21,7 @@
     -webkit-tap-highlight-color: transparent; 
   }
 
-  /* قفل کردن کل صفحه در برابر حالت تاریک مرورگر */
+  
   html, body { 
     height: 100%; 
     width: 100%;
@@ -36,7 +36,7 @@
     -webkit-user-select: none;
   }
 
-  /* یک لایه سفید مطلق در پس‌زمینه که هیچوقت سیاه نمی‌شود */
+  
   .bg-layer {
     position: fixed;
     inset: 0;
@@ -246,7 +246,7 @@
   .app-orb-container canvas {
     width: min(85vmin, 400px);
     height: min(85vmin, 400px);
-    background-color: #fcfcfa !important; /* قفل کردن رنگ بوم */
+    background-color: #fcfcfa !important; 
   }
 
   .subtitle {
@@ -385,7 +385,7 @@
 </head>
 <body>
 
-  <!-- لایه سفید مطلق برای جلوگیری از سیاه شدن پس‌زمینه -->
+  
   <div class="bg-layer"></div>
 
   <!-- 1. TERMS SCREEN -->
@@ -682,7 +682,7 @@
      CANVAS ANIMATION
      ========================================================= */
   var canvas = document.getElementById('app-canvas');
-  // استفاده از alpha: false برای جلوگیری از شفافیت و سیاه شدن
+
   var ctx = canvas.getContext('2d', { alpha: false });
 
   var W = 1, H = 1, cx = 0, cy = 0, R = 1, DPR = 1;
@@ -859,7 +859,7 @@
   ];
 
   function render() {
-    // پر کردن کل بوم با رنگ کاغذ تا هیچ‌وقت سیاه نشود
+
     ctx.fillStyle = '#fcfcfa';
     ctx.fillRect(0, 0, W, H);
     
