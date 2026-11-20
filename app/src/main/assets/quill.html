@@ -398,10 +398,10 @@
       <p>3. <b>Usage:</b> You agree not to misuse the application, attempt to extract the underlying code, or use it for malicious purposes.</p>
       <p>4. <b>Privacy:</b> We respect your privacy. The visual animations and voice selections are processed entirely in your browser and are not tracked.</p>
       <p>5. <b>Changes:</b> We may update these terms from time to time. Continued use of QUILL constitutes acceptance of any new terms.</p>
-      <p>Please scroll down to read all terms before agreeing.</p>
+      
       <div style="height: 40px;"></div>
     </div>
-    <button id="btn-agree" class="btn-sketch" disabled>Agree & Continue</button>
+    <button id="btn-agree" class="btn-sketch">Agree & Continue</button>
   </div>
 
   <!-- 2. SETUP SCREEN (VOICE LIST) -->
@@ -485,15 +485,9 @@
   var voiceScreen = document.getElementById('screen-voice');
   var app = document.getElementById('screen-app');
 
-  // Terms Scroll Logic
-  var termsBox = document.getElementById('terms-box');
+  // Terms Agreement
   var btnAgree = document.getElementById('btn-agree');
-  termsBox.addEventListener('scroll', function() {
-    var bottom = termsBox.scrollHeight - termsBox.scrollTop - termsBox.clientHeight;
-    if (bottom < 50) {
-      btnAgree.disabled = false;
-    }
-  });
+  btnAgree.disabled = false;
 
   btnAgree.addEventListener('click', function() {
     terms.classList.add('hidden');
