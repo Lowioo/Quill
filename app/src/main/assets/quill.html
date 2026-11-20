@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#fcfcfa">
+<meta name="color-scheme" content="only light">
+<title>QUILL</title>
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --ink-soft: #666666;
+    --line: #d0d0d0;
+    --paper: #fcfcfa;
+    --pure-white: #ffffff;
+    color-scheme: light only;
+  }
+
+  * { 
+    box-sizing: border-box; 
+    -webkit-tap-highlight-color: transparent; 
+  }
+
+  
+  html, body { 
+    height: 100%; 
+    width: 100%;
+    margin: 0; 
+    padding: 0;
+    background-color: #fcfcfa !important;
+    color: #1a1a1a !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    overflow: hidden;
+    overscroll-behavior: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  
+  .bg-layer {
+    position: fixed;
+    inset: 0;
+    background-color: #fcfcfa !important;
+    z-index: -9999;
+    pointer-events: none;
+  }
+
+  /* =========================================================
+     SCREENS
+     ========================================================= */
+  .screen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #fcfcfa !important;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    z-index: 10;
+  }
+
+  .screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(1.02);
+    z-index: -1;
+  }
+
+  /* ---------- TERMS ---------- */
+  #screen-terms {
+    padding: 40px 24px;
+    justify-content: flex-start;
+    z-index: 40;
+  }
+
+  .terms-title {
+    font-family: Georgia, serif;
+    font-style: italic;
+    font-size: 28px;
+    margin-top: 20px;
+    margin-bottom: 24px;
+    width: 100%;
+    max-width: 400px;
+    color: var(--ink);
+  }
+
+  .terms-box {
+    flex: 1;
+    width: 100%;
+    max-width: 400px;
+    overflow-y: auto;
+    padding-right: 10px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--ink-soft);
+    margin-bottom: 24px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .terms-box p { margin: 0 0 16px 0; }
+  .terms-box b { color: var(--ink); }
+
+  /* ---------- BUTTONS ---------- */
+  .btn-sketch {
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink);
+    background: transparent;
+    border: 1.5px solid var(--ink);
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+    padding: 16px 40px;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+    outline: none;
+    -webkit-appearance: none;
+  }
+  
+  .btn-sketch:active {
+    transform: scale(0.96) rotate(-1deg);
+    background: rgba(0,0,0,0.04);
+  }
+
+  .btn-sketch:disabled {
+    opacity: 0.3;
+    pointer-events: none;
+    border-color: #999;
+  }
+
+  /* ---------- VOICE LIST (SETUP) ---------- */
+  #screen-voice {
+    padding: calc(24px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom));
+    justify-content: space-between;
+    background-color: #fcfcfa !important;
+    z-index: 30;
+  }
+
+  .voice-header {
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    position: relative;
+    margin-bottom: 20px;
+  }
+
+  .voice-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+    color: var(--ink);
+  }
+
+  .voice-list-container {
+    flex: 1;
+    width: 100%;
+    max-width: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: #ffffff !important;
+    margin-bottom: 24px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .voice-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    background: #ffffff !important;
+    transition: background 0.2s;
+  }
+
+  .voice-row:last-child { border-bottom: none; }
+  .voice-row:active { background: #f9f9f9 !important; }
+
+  .voice-name {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .voice-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .speaker-btn {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: var(--ink-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .speaker-btn:active { color: var(--ink); }
+  .speaker-btn svg { width: 20px; height: 20px; }
+
+  .checkmark {
+    font-size: 18px;
+    color: var(--ink);
+    opacity: 0;
+    transition: opacity 0.2s;
+    font-weight: 600;
+  }
+
+  .voice-row.selected .checkmark { opacity: 1; }
+
+  /* ---------- MAIN APP ---------- */
+  #screen-app {
+    justify-content: space-between;
+    padding-top: calc(16px + env(safe-area-inset-top));
+    background-color: #fcfcfa !important;
+    z-index: 20;
+  }
+
+  .app-header {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    font-family: Georgia, serif;
+    font-style: italic;
+    font-size: 18px;
+    letter-spacing: 0.2em;
+    color: var(--ink-soft);
+  }
+
+  .app-orb-container {
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .app-orb-container canvas {
+    width: min(85vmin, 400px);
+    height: min(85vmin, 400px);
+    background-color: #fcfcfa !important; 
+  }
+
+  .subtitle {
+    height: 40px;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Georgia, serif;
+    font-style: italic;
+    font-size: 15px;
+    color: var(--ink);
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+
+  .subtitle.on { opacity: 1; }
+
+  /* App Bottom Panel */
+  .app-panel {
+    width: 100%;
+    padding: 10px 20px calc(20px + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+    background: #fcfcfa !important;
+  }
+
+  .state-controls {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .state-btn {
+    font: inherit;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    background: transparent;
+    border: 1.2px solid var(--line);
+    border-radius: 16px 6px 18px 8px / 8px 18px 6px 16px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .state-btn.active {
+    color: var(--ink);
+    border-color: var(--ink);
+    background: rgba(0,0,0,0.03);
+    transform: scale(1.05);
+    font-weight: 600;
+  }
+
+  /* App Voices Tab */
+  .app-voices-list {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 5px 0;
+    scrollbar-width: none;
+    min-height: 48px;
+    align-items: center;
+  }
+  .app-voices-list::-webkit-scrollbar { display: none; }
+
+  .app-voice-chip {
+    flex: 0 0 auto;
+    padding: 8px 14px;
+    font: inherit;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-soft);
+    background: transparent;
+    border: 1.2px solid var(--line);
+    border-radius: 12px 4px 14px 6px / 6px 14px 4px 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .app-voice-chip.selected {
+    color: var(--ink);
+    border-color: var(--ink);
+    background: rgba(0,0,0,0.04);
+    font-weight: 600;
+  }
+
+  /* Tab Bar */
+  .tab-bar {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--line);
+  }
+
+  .tab-btn {
+    font: inherit;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #999;
+    background: transparent;
+    border: none;
+    padding: 8px 0;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .tab-btn.active {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    left: -4px;
+    right: -4px;
+    height: 2px;
+    background: var(--ink);
+    border-radius: 50%;
+    transform: rotate(-1deg);
+  }
+
+  .hidden { display: none !important; }
+
+</style>
+</head>
+<body>
+
+  
+  <div class="bg-layer"></div>
+
+  <!-- 1. TERMS SCREEN -->
+  <div id="screen-terms" class="screen">
+    <h1 class="terms-title">Terms of Service</h1>
+    <div class="terms-box" id="terms-box">
+      <p>Welcome to QUILL. By proceeding, you agree to interact with an artificial intelligence designed as a living pencil sketch.</p>
+      <p>1. <b>Voice Data:</b> To function properly, QUILL requires access to your microphone for the "Listening" state. All audio processing happens locally on your device. No voice data is stored on external servers.</p>
+      <p>2. <b>AI Limitations:</b> QUILL is a simulated assistant interface. Responses are generated using browser-based text-to-speech algorithms and may not reflect real-world absolute truths.</p>
+      <p>3. <b>Usage:</b> You agree not to misuse the application, attempt to extract the underlying code, or use it for malicious purposes.</p>
+      <p>4. <b>Privacy:</b> We respect your privacy. The visual animations and voice selections are processed entirely in your browser and are not tracked.</p>
+      <p>5. <b>Changes:</b> We may update these terms from time to time. Continued use of QUILL constitutes acceptance of any new terms.</p>
+      <p>Please scroll down to read all terms before agreeing.</p>
+      <div style="height: 40px;"></div>
+    </div>
+    <button id="btn-agree" class="btn-sketch" disabled>Agree & Continue</button>
+  </div>
+
+  <!-- 2. SETUP SCREEN (VOICE LIST) -->
+  <div id="screen-voice" class="screen hidden">
+    <div class="voice-header">
+      <h2>Choose a voice</h2>
+    </div>
+    
+    <div class="voice-list-container" id="setup-voice-list">
+      <!-- Injected via JS -->
+    </div>
+
+    <button id="btn-done-voice" class="btn-sketch" disabled>Done</button>
+  </div>
+
+  <!-- 3. MAIN APP -->
+  <div id="screen-app" class="screen hidden">
+    <div class="app-header">QUILL</div>
+    
+    <div class="app-orb-container">
+      <canvas id="app-canvas"></canvas>
+    </div>
+
+    <div class="subtitle" id="subtitle"></div>
+
+    <div class="app-panel">
+      
+      <!-- Quill Tab Content -->
+      <div id="tab-content-quill" style="display: flex; flex-direction: column; gap: 15px;">
+        <div class="state-controls">
+          <button class="state-btn active" data-state="idle">Idle</button>
+          <button class="state-btn" data-state="listening">Listening</button>
+          <button class="state-btn" data-state="talking">Talking</button>
+        </div>
+      </div>
+
+      <!-- Voices Tab Content -->
+      <div id="tab-content-voices" class="hidden">
+        <div class="app-voices-list" id="app-voices-list">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+
+      <!-- Tab Bar -->
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="quill">Quill</button>
+        <button class="tab-btn" data-tab="voices">Voices</button>
+      </div>
+
+    </div>
+  </div>
+
+<script>
+(function() {
+  'use strict';
+
+  var TAU = Math.PI * 2;
+
+  /* =========================================================
+     DATA
+     ========================================================= */
+  var MOLECULES = [
+    { id: 'oxygen',   name: 'Oxygen',   pitch: 1.0, rate: 1.0 },
+    { id: 'carbon',   name: 'Carbon',   pitch: 0.7, rate: 0.9 },
+    { id: 'hydrogen', name: 'Hydrogen', pitch: 1.3, rate: 1.1 },
+    { id: 'nitrogen', name: 'Nitrogen', pitch: 0.9, rate: 1.0 },
+    { id: 'helium',   name: 'Helium',   pitch: 1.6, rate: 1.2 },
+    { id: 'neon',     name: 'Neon',     pitch: 1.4, rate: 1.1 },
+    { id: 'argon',    name: 'Argon',    pitch: 0.8, rate: 0.9 },
+    { id: 'iron',     name: 'Iron',     pitch: 0.6, rate: 0.8 },
+    { id: 'copper',   name: 'Copper',   pitch: 0.8, rate: 0.9 },
+    { id: 'zinc',     name: 'Zinc',     pitch: 1.1, rate: 1.0 }
+  ];
+
+  var currentMolecule = null; // No default voice
+
+  /* =========================================================
+     SCREEN TRANSITIONS & TERMS
+     ========================================================= */
+  var terms = document.getElementById('screen-terms');
+  var voiceScreen = document.getElementById('screen-voice');
+  var app = document.getElementById('screen-app');
+
+  // Terms Scroll Logic
+  var termsBox = document.getElementById('terms-box');
+  var btnAgree = document.getElementById('btn-agree');
+  termsBox.addEventListener('scroll', function() {
+    var bottom = termsBox.scrollHeight - termsBox.scrollTop - termsBox.clientHeight;
+    if (bottom < 50) {
+      btnAgree.disabled = false;
+    }
+  });
+
+  btnAgree.addEventListener('click', function() {
+    terms.classList.add('hidden');
+    voiceScreen.classList.remove('hidden');
+  });
+
+  /* =========================================================
+     SPEECH SYNTHESIS
+     ========================================================= */
+  var speech = {
+    synth: window.speechSynthesis || null,
+    active: false,
+    env: 0,
+    timer: null
+  };
+
+  function getEnglishVoice() {
+    if (!speech.synth) return null;
+    var voices = speech.synth.getVoices();
+    for (var i = 0; i < voices.length; i++) {
+      if (voices[i].lang.indexOf('en') === 0) return voices[i];
+    }
+    return voices[0] || null;
+  }
+
+  function playPreview(mol) {
+    if (!speech.synth) return;
+    try { speech.synth.cancel(); } catch (e) {}
+    
+    var u = new SpeechSynthesisUtterance("Hello");
+    u.pitch = mol.pitch;
+    u.rate = mol.rate;
+    var v = getEnglishVoice();
+    if (v) u.voice = v;
+    
+    try { speech.synth.speak(u); } catch (e) {}
+  }
+
+  function speakApp(text) {
+    if (!speech.synth) return;
+    try { speech.synth.cancel(); } catch (e) {}
+    
+    var subtitleEl = document.getElementById('subtitle');
+    subtitleEl.textContent = text;
+    subtitleEl.classList.add('on');
+    
+    speech.active = true;
+    speech.env = 0.8;
+    
+    var u = new SpeechSynthesisUtterance(text);
+    if (currentMolecule) {
+      u.pitch = currentMolecule.pitch;
+      u.rate = currentMolecule.rate;
+    }
+    var v = getEnglishVoice();
+    if (v) u.voice = v;
+
+    u.onboundary = function() {
+      speech.env = 1.0;
+    };
+
+    u.onend = function() {
+      speech.active = false;
+      subtitleEl.classList.remove('on');
+      clearTimeout(speech.timer);
+    };
+
+    speech.timer = setTimeout(function() {
+      speech.active = false;
+      subtitleEl.classList.remove('on');
+    }, 3000 + text.length * 80);
+
+    try { speech.synth.speak(u); } catch (e) {}
+  }
+
+  /* =========================================================
+     VOICE SELECTION SCREEN
+     ========================================================= */
+  var setupList = document.getElementById('setup-voice-list');
+  var btnDoneVoice = document.getElementById('btn-done-voice');
+
+  MOLECULES.forEach(function(m) {
+    var row = document.createElement('div');
+    row.className = 'voice-row';
+    row.dataset.id = m.id;
+    
+    row.innerHTML = 
+      '<span class="voice-name">' + m.name + '</span>' +
+      '<div class="voice-actions">' +
+        '<button class="speaker-btn">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+            '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>' +
+            '<path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>' +
+            '<path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>' +
+          '</svg>' +
+        '</button>' +
+        '<span class="checkmark">✓</span>' +
+      '</div>';
+
+    // Speaker button click
+    var spkBtn = row.querySelector('.speaker-btn');
+    spkBtn.addEventListener('click', function(e) {
+      e.stopPropagation(); // Prevent row selection
+      playPreview(m);
+    });
+
+    // Row click (selection)
+    row.addEventListener('click', function() {
+      document.querySelectorAll('.voice-row').forEach(function(r) { r.classList.remove('selected'); });
+      row.classList.add('selected');
+      currentMolecule = m;
+      btnDoneVoice.disabled = false;
+    });
+
+    setupList.appendChild(row);
+  });
+
+  btnDoneVoice.addEventListener('click', function() {
+    voiceScreen.classList.add('hidden');
+    app.classList.remove('hidden');
+    
+    // Init app
+    initCanvas();
+    buildAppVoiceList();
+    setTimeout(function() {
+      speakApp("Hello, I am Quill.");
+    }, 500);
+  });
+
+  /* =========================================================
+     APP UI & TABS
+     ========================================================= */
+  var tabBtns = document.querySelectorAll('.tab-btn');
+  var tabQuill = document.getElementById('tab-content-quill');
+  var tabVoices = document.getElementById('tab-content-voices');
+  var appVoicesList = document.getElementById('app-voices-list');
+
+  function buildAppVoiceList() {
+    appVoicesList.innerHTML = '';
+    MOLECULES.forEach(function(m) {
+      var chip = document.createElement('button');
+      chip.className = 'app-voice-chip' + (currentMolecule && m.id === currentMolecule.id ? ' selected' : '');
+      chip.innerHTML = m.name;
+      chip.addEventListener('click', function() {
+        document.querySelectorAll('.app-voice-chip').forEach(function(c) { c.classList.remove('selected'); });
+        chip.classList.add('selected');
+        currentMolecule = m;
+        speakApp("Voice changed.");
+      });
+      appVoicesList.appendChild(chip);
+    });
+  }
+
+  tabBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      tabBtns.forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      
+      if (btn.dataset.tab === 'quill') {
+        tabQuill.classList.remove('hidden');
+        tabVoices.classList.add('hidden');
+      } else {
+        tabQuill.classList.add('hidden');
+        tabVoices.classList.remove('hidden');
+      }
+    });
+  });
+
+  document.querySelectorAll('.state-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.state-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      stateName = btn.dataset.state;
+      
+      if (stateName === 'talking') {
+        speakApp("I can pulse when I speak. My shape reflects my voice.");
+      } else if (stateName === 'listening') {
+        startMic();
+      } else {
+        stopMic();
+      }
+    });
+  });
+
+  /* =========================================================
+     CANVAS ANIMATION
+     ========================================================= */
+  var canvas = document.getElementById('app-canvas');
+
+  var ctx = canvas.getContext('2d', { alpha: false });
+
+  var W = 1, H = 1, cx = 0, cy = 0, R = 1, DPR = 1;
+  var stateName = 'idle';
+  var time = 0, lastT = 0, rot = 0;
+  var phase = { breathe: 0, wave: 0, org: 0 };
+
+  function initCanvas() {
+    var rect = canvas.getBoundingClientRect();
+    var w = Math.max(1, Math.round(rect.width));
+    var h = Math.max(1, Math.round(rect.height));
+
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = w; H = h;
+    canvas.width = Math.round(w * DPR);
+    canvas.height = Math.round(h * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+    cx = w * 0.5;
+    cy = h * 0.5;
+    R = Math.min(w, h) * 0.315;
+  }
+
+  window.addEventListener('resize', function() {
+    if (!app.classList.contains('hidden')) initCanvas();
+  });
+
+  /* --- Microphone --- */
+  var mic = { active: false, level: 0, analyser: null, data: null };
+
+  function startMic() {
+    if (mic.active) return;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      mic.level = 0.5; return;
+    }
+    
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      var actx = new AC();
+      var src = actx.createMediaStreamSource(stream);
+      var an = actx.createAnalyser();
+      an.fftSize = 256;
+      src.connect(an);
+      mic.analyser = an;
+      mic.data = new Uint8Array(an.fftSize);
+      mic.active = true;
+    }).catch(function() {
+      mic.active = false;
+    });
+  }
+
+  function stopMic() {
+    if (mic.analyser) {
+      mic.active = false;
+      mic.analyser = null;
+      mic.level = 0;
+    }
+  }
+
+  function updateMic(dt) {
+    if (mic.active && mic.analyser) {
+      mic.analyser.getByteTimeDomainData(mic.data);
+      var sum = 0;
+      for (var i = 0; i < mic.data.length; i++) {
+        var v = (mic.data[i] - 128) / 128;
+        sum += v * v;
+      }
+      var rms = Math.sqrt(sum / mic.data.length);
+      var target = Math.min(1, Math.max(0, (rms - 0.01) * 8));
+      mic.level += (target - mic.level) * 0.2;
+    } else {
+      mic.level = 0.15 + 0.1 * Math.sin(time * 3);
+    }
+  }
+
+  /* --- Speech Envelope --- */
+  function updateSpeechEnv(dt) {
+    if (speech.active) {
+      var base = 0.5 + 0.3 * Math.sin(time * 10) + 0.2 * Math.sin(time * 15.3);
+      var target = base + speech.env;
+      if (target > 1) target = 1;
+      if (target < 0) target = 0;
+      
+      speech.env += (target - speech.env) * 0.2;
+      speech.env *= 0.96; 
+    } else {
+      speech.env *= Math.exp(-dt * 5);
+    }
+  }
+
+  /* --- Pencil Drawing Logic --- */
+  function radiusAt(a) {
+    var r = 1;
+    
+    r += 0.015 * Math.sin(phase.breathe);
+    
+    var o = phase.org;
+    r += 0.012 * (
+      0.55 * Math.sin(2 * a + 1.3 + o * 0.4) +
+      0.34 * Math.sin(3 * a - 2.1 - o * 0.3) +
+      0.24 * Math.sin(5 * a + 4.2 + o * 0.5)
+    );
+
+    var wa = 0.003;
+    if (stateName === 'listening') wa = 0.005 + mic.level * 0.03;
+    if (stateName === 'talking') wa = 0.008 + speech.env * 0.02;
+    
+    r += wa * (
+      0.7 * Math.sin(5 * a + phase.wave) +
+      0.3 * Math.sin(9 * a - phase.wave * 0.8 + 2)
+    );
+
+    // PULSE for Talking State
+    if (stateName === 'talking' && speech.env > 0.05) {
+      r += speech.env * 0.18; 
+    }
+
+    // Listening reaction
+    if (stateName === 'listening' && mic.level > 0.05) {
+      r += mic.level * 0.1;
+    }
+
+    return r;
+  }
+
+  function pressure(u, seed) {
+    var v = 0.58 + 0.24 * Math.sin(u * TAU * 2 + seed * 3.1)
+          + 0.14 * Math.sin(u * TAU * 5 + seed * 7.7 + 1.2)
+          + 0.09 * Math.sin(u * TAU * 11 + seed * 2.3 + 4.4);
+    return Math.max(0, Math.min(1, v));
+  }
+
+  var buckets = Object.create(null);
+  function seg(x0, y0, x1, y1, w, alpha) {
+    if (alpha < 0.02) return;
+    w = Math.max(0.2, w);
+    var qw = Math.round(w * 8) / 8;
+    var qa = Math.round(alpha * 10) / 10;
+    if (qa <= 0) return;
+    var key = qw + '|' + qa;
+    if (!buckets[key]) buckets[key] = { w: qw, a: qa, pts: [] };
+    buckets[key].pts.push(x0, y0, x1, y1);
+  }
+
+  function flush() {
+    for (var key in buckets) {
+      var b = buckets[key];
+      if (b.pts.length === 0) continue;
+      ctx.globalAlpha = b.a;
+      ctx.lineWidth = b.w;
+      ctx.beginPath();
+      for (var i = 0; i < b.pts.length; i += 4) {
+        ctx.moveTo(b.pts[i], b.pts[i+1]);
+        ctx.lineTo(b.pts[i+2], b.pts[i+3]);
+      }
+      ctx.stroke();
+      b.pts.length = 0;
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  var STROKES = [
+    { off:  0.022, w: 0.85, alpha: 0.52, seed:  1.37, jit: 0.90 },
+    { off:  0.004, w: 1.30, alpha: 0.90, seed:  4.71, jit: 1.20 },
+    { off: -0.010, w: 1.05, alpha: 0.78, seed:  7.93, jit: 1.40 },
+    { off: -0.028, w: 0.80, alpha: 0.58, seed: 11.19, jit: 1.60 },
+    { off:  0.034, w: 0.60, alpha: 0.34, seed: 14.63, jit: 1.90 }
+  ];
+
+  var ACCENTS = [
+    { seed:  2.10, off:  0.030, len: 0.66, speed:  0.26, w: 0.75, alpha: 0.50 },
+    { seed:  5.40, off: -0.034, len: 0.46, speed: -0.21, w: 0.60, alpha: 0.38 },
+    { seed:  8.80, off:  0.042, len: 0.34, speed:  0.34, w: 0.55, alpha: 0.30 }
+  ];
+
+  function render() {
+
+    ctx.fillStyle = '#fcfcfa';
+    ctx.fillRect(0, 0, W, H);
+    
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#1a1a1a';
+
+    for (var i = 0; i < STROKES.length; i++) {
+      var s = STROKES[i];
+      var start = s.seed * 1.7;
+      var sweep = TAU + 0.1;
+      var px = 0, py = 0;
+
+      for (var j = 0; j <= 96; j++) {
+        var u = j / 96;
+        var a = start + u * sweep + rot;
+        var r = radiusAt(a) + s.off;
+        
+        r += 0.006 * s.jit * (
+          Math.sin(a * 6 + s.seed * 3.7 + time * 1.15) * 0.6 +
+          Math.sin(a * 11 - s.seed * 2.1 + time * 0.83) * 0.4
+        );
+
+        var x = cx + Math.cos(a) * r * R;
+        var y = cy + Math.sin(a) * r * R;
+
+        if (j > 0) {
+          var pr = pressure(u, s.seed);
+          var fade = 1;
+          if (u < 0.06) fade = u / 0.06;
+          else if (u > 0.94) fade = (1 - u) / 0.06;
+          seg(px, py, x, y, s.w * (0.45 + 0.85 * pr), s.alpha * (0.2 + 0.8 * pr) * fade);
+        }
+        px = x; py = y;
+      }
+    }
+
+    for (var k = 0; k < ACCENTS.length; k++) {
+      var ac = ACCENTS[k];
+      var a0 = ac.seed + time * ac.speed + rot;
+      var px2 = 0, py2 = 0;
+      for (var m = 0; m <= 18; m++) {
+        var u2 = m / 18;
+        var a2 = a0 + u2 * ac.len;
+        var r2 = radiusAt(a2) + ac.off;
+        r2 += 0.005 * Math.sin(a2 * 9 + ac.seed * 5.1 + time * 1.4);
+        var x2 = cx + Math.cos(a2) * r2 * R;
+        var y2 = cy + Math.sin(a2) * r2 * R;
+        if (m > 0) {
+          var fade2 = Math.sin(u2 * Math.PI);
+          seg(px2, py2, x2, y2, ac.w * (0.7 + 0.6 * fade2), ac.alpha * fade2 * 0.5);
+        }
+        px2 = x2; py2 = y2;
+      }
+    }
+
+    flush();
+  }
+
+  function loop(now) {
+    if (!lastT) lastT = now;
+    var dt = (now - lastT) / 1000;
+    lastT = now;
+    if (dt > 0.05) dt = 0.05;
+    if (dt < 0) dt = 0;
+
+    time += dt;
+    phase.breathe += dt * (stateName === 'listening' ? 3 : 1.5);
+    phase.wave += dt * (stateName === 'talking' ? 8 : 2);
+    phase.org += dt;
+    rot += dt * 0.05;
+
+    updateSpeechEnv(dt);
+    if (stateName === 'listening') updateMic(dt);
+
+    if (!app.classList.contains('hidden')) {
+      render();
+    }
+
+    requestAnimationFrame(loop);
+  }
+
+  requestAnimationFrame(loop);
+
+})();
+</script>
+</body>
+</html>
